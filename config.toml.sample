@@ -1,0 +1,6 @@
+
+baseurl = "https://agnes.campus.tue.nl:18443/case/tue/RES_001"
+
+# TU/e user account details
+username = "TUE\\s"
+password = ""
