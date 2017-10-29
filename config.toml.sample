@@ -1,6 +1,6 @@
+# Without / at the end
+json_rpc_url = ""
 
-baseurl = "https://agnes.campus.tue.nl:18443/case/tue/RES_001"
-
-# TU/e user account details
-username = "TUE\\s"
-password = ""
+j_security_check_url = ""
+j_username = ""
+j_password = ""
