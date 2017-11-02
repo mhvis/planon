@@ -1,6 +1,5 @@
 # Without / at the end
-json_rpc_url = ""
+twowayauth_url = ""
 
-j_security_check_url = ""
 j_username = ""
 j_password = ""

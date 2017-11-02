@@ -16,6 +16,10 @@ type Server http.Server
 
 func NewServer() *Server {
 	r := mux.NewRouter()
+
+	r.Handle("/bookings", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hallo"))
+	}))
 	//r.Handle("/bookings", BookingsHandler(session)).Methods("GET")
 	//r.Handle("/book", BookHandler(session)).Methods("GET")
 
@@ -42,4 +46,8 @@ func (s *Server) Shutdown() {
 	(*http.Server)(s).Shutdown(ctx)
 
 	log.Println("Server gracefully stopped")
+}
+
+func BookingsHandler() {
+
 }

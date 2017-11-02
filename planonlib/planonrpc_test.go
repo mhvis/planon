@@ -1,4 +1,4 @@
-package planon
+package planonlib
 
 import (
 	"reflect"

@@ -1,4 +1,4 @@
-package planon
+package planonlib
 
 // Planon low-level RPC.
 
@@ -11,11 +11,24 @@ import (
 	"strings"
 )
 
+type planonError struct {
+	ID int
+	ExMessage string `json:"exMessage"`
+	DetailMessage string `json:"detailMessage"`
+	Cause struct{
+		Class string `json:"class"`
+		Message string `json:"message"`
+		ID int
+	} `json:"cause"`
+	StackTrace []interface{} `json:"stackTrace"`
+	SuppressedExceptions []interface{} `json:"suppressedExceptions"`
+}
+
 // Call calls the given method with parameters on Planon.
 func (p *Planon) Call(endpoint, method string, params map[string]interface{}, result interface{}) error {
 	// Construct request
 	paramsEncoded := jsonEncodeParams(params)
-	req, err := jsonrpc.JSONRPCEncodeRequest(p.jsonRpcUrl+endpoint, method, paramsEncoded, p.id)
+	req, err := jsonrpc.JSONRPCEncodeRequest(p.twoWayAuthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
 	if err != nil {
 		return err
 	}
@@ -38,7 +51,7 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 	case "text/html":
 		// HTML response, assuming login screen, try to authenticate
 		login := url.Values{"j_username": {p.jUsername}, "j_password": {p.jPassword}}
-		resp, err = p.client.PostForm(p.jSecurityCheckUrl, login)
+		resp, err = p.client.PostForm(p.twoWayAuthUrl+"/j_security_check", login)
 		if err != nil {
 			return err
 		}
