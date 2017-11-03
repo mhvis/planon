@@ -23,8 +23,8 @@ type rpcResponse struct {
 	Result interface{} `json:"result"`
 }
 
-// JSONRPCDecode decodes the given JSON object and returns the RPC properties.
-func JSONRPCDecode(data []byte, result, error interface{}) (id int, err error) {
+// Decode decodes the given JSON object and returns the RPC properties.
+func Decode(data []byte, result, error interface{}) (id int, err error) {
 	resp := rpcResponse{
 		Error:  error,
 		Result: result,
@@ -34,26 +34,26 @@ func JSONRPCDecode(data []byte, result, error interface{}) (id int, err error) {
 	return
 }
 
-// JSONRPCDecodeResponse decodes the JSON RPC object in the response.
-func JSONRPCDecodeResponse(resp *http.Response, result, error interface{}) (id int, err error) {
+// DecodeResponse decodes the JSON RPC object in the response.
+func DecodeResponse(resp *http.Response, result, error interface{}) (id int, err error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return 0, err
 	}
 	// Todo better logging
 	log.Println("received:", string(body))
-	return JSONRPCDecode(body, result, error)
+	return Decode(body, result, error)
 }
 
-// JSONRPCEncode encodes given arguments to a JSON object.
-func JSONRPCEncode(method string, params interface{}, id int) ([]byte, error) {
+// Encode encodes given arguments to a JSON object.
+func Encode(method string, params interface{}, id int) ([]byte, error) {
 	req := rpcRequest{id, method, params}
 	return json.Marshal(req)
 }
 
-// JSONRPCEncodeRequest creates an HTTP request using given parameters.
-func JSONRPCEncodeRequest(url, method string, params interface{}, id int) (*http.Request, error) {
-	data, err := JSONRPCEncode(method, params, id)
+// EncodeRequest creates an HTTP request using given parameters.
+func EncodeRequest(url, method string, params interface{}, id int) (*http.Request, error) {
+	data, err := Encode(method, params, id)
 	if err != nil {
 		return nil, err
 	}

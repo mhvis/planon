@@ -5,11 +5,11 @@ import (
 	"testing"
 )
 
-func TestJSONRPCDecode(t *testing.T) {
+func TestDecode(t *testing.T) {
 	jsonResponse := `{"result": "hallo", "error": {"message": "error message"}, "id": 2}`
 	var result string
 	var error interface{}
-	id, err := JSONRPCDecode([]byte(jsonResponse), &result, &error)
+	id, err := Decode([]byte(jsonResponse), &result, &error)
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,11 +32,11 @@ func TestJSONRPCDecode(t *testing.T) {
 	}
 }
 
-func TestJSONRPCDecodeObject(t *testing.T) {
+func TestDecodeObject(t *testing.T) {
 	jsonResponse := `{"result":"{\"serverversion\":\"201311.00.30.01\",\"version\":\"1.1.9.0\"}","error":null,"id":0}`
 	var result string
 	var error interface{}
-	_, err := JSONRPCDecode([]byte(jsonResponse), &result, &error)
+	_, err := Decode([]byte(jsonResponse), &result, &error)
 	if err != nil {
 		t.Error(err)
 	}
@@ -48,12 +48,12 @@ func TestJSONRPCDecodeObject(t *testing.T) {
 	}
 }
 
-func TestJSONRPCEncode(t *testing.T) {
+func TestEncode(t *testing.T) {
 	params := struct {
 		AParam       string `json:"a_param"`
 		AnotherParam bool   `json:"another_param"`
 	}{"aValue", false}
-	data, err := JSONRPCEncode("test", params, 2)
+	data, err := Encode("test", params, 2)
 	if err != nil {
 		t.Error(err)
 	}
@@ -65,8 +65,8 @@ func TestJSONRPCEncode(t *testing.T) {
 	}
 }
 
-func TestJSONRPCEncodeRequest(t *testing.T) {
-	req, err := JSONRPCEncodeRequest("http://ankie.catspalace", "miauw", nil, 0)
+func TestEncodeRequest(t *testing.T) {
+	req, err := EncodeRequest("http://ankie.catspalace", "miauw", nil, 0)
 	if err != nil {
 		t.Error(err)
 	}

@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"fmt"
 )
 
 type planonError struct {
@@ -28,7 +29,7 @@ type planonError struct {
 func (p *Planon) Call(endpoint, method string, params map[string]interface{}, result interface{}) error {
 	// Construct request
 	paramsEncoded := jsonEncodeParams(params)
-	req, err := jsonrpc.JSONRPCEncodeRequest(p.twoWayAuthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
+	req, err := jsonrpc.EncodeRequest(p.twoWayAuthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
 	if err != nil {
 		return err
 	}
@@ -69,14 +70,17 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 	// Decode JSON-RPC response
 	var resultEncoded string
 	var error interface{}
-	id, err := jsonrpc.JSONRPCDecodeResponse(resp, &resultEncoded, &error)
+	id, err := jsonrpc.DecodeResponse(resp, &resultEncoded, &error)
 	if err != nil {
 		return err
 	}
 	// Check RPC response message
 	if error != nil {
-		// Todo return more useful error message
-		return errors.New("rpc error")
+		// Collect error data
+		errorMap := error.(map[string]interface{})
+		errorId := errorMap["ID"].(float64)
+		errorMessage := errorMap["exMessage"].(string)
+		return errors.New(fmt.Sprintf("rpc error: %v %v", errorId, errorMessage))
 	}
 	if p.id != id {
 		return errors.New("rpc response id is not equal to request id")
