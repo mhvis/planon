@@ -9,18 +9,15 @@ import (
 	"golang.org/x/net/publicsuffix"
 	"net/url"
 	"io/ioutil"
+	"github.com/mhvis/planon/jsonrpc"
+	"encoding/base64"
+	"strings"
 )
-
-/*
-02406edb31a-2864-466b-89e1-9c2ce53a8feb
-024645101c7-bfe0-463a-93cd-245e1930f94a
-
- */
 
 func main() {
 	a := os.Args
-	if len(a) < 5 {
-		fmt.Printf("Usage: %v <twowayauth url> <username> <uuid> <new token>\n", a[0])
+	if len(a) < 3 {
+		fmt.Printf("Usage: %v <ticket> <new token>\n", a[0])
 		os.Exit(2)
 	}
 
@@ -29,33 +26,104 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
 	// Create HTTP client
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		Jar:     jar,
 	}
 
-	// Get variables
-	authUrl := a[1] + "/j_security_check"
-	username := a[2]
-	uuid := a[3]
-	token := a[4]
+	ticket := a[1]
+	token := a[2]
+	domain, username, password := decodeTicket(ticket)
+	fmt.Println("domain:", domain)
+	fmt.Println("username:", username)
+	fmt.Println("password:", password)
 
-	password := uuid + token
-
-	// Do request
-	resp, err := client.PostForm(authUrl, url.Values{"j_username": {username}, "j_password": {password}})
+	// Do getMe request
+	req, err := jsonrpc.EncodeRequest(domain+"/JSONrpc/UserInformation", "getMe", nil, 0)
 	if err != nil {
 		panic(err)
 	}
+	// Print response
+	resp, err := client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("getMe response:", resp)
 
-	// Examine/print response
+	// Do login request
+	resp, err = client.PostForm(domain+"/j_security_check", url.Values{
+		"j_username": {username},
+		"j_password": {password + token},
+	})
+	if err != nil {
+		panic(err)
+	}
+	// Print response
+	fmt.Println("login response:", resp, getBody(resp))
+
+	// Do logout
+	req, err = jsonrpc.EncodeRequest(domain+"/JSONrpc/UserInformation", "logout", nil, 0)
+	if err != nil {
+		panic(err)
+	}
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	// Print response
+	fmt.Println("logout response:", resp, getBody(resp))
+
+	// Try another login, now with token
+	req, err = jsonrpc.EncodeRequest(domain+"/JSONrpc/UserInformation", "getMe", nil, 0)
+	if err != nil {
+		panic(err)
+	}
+	// Print response
+	resp, err = client.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("getMe response:", resp)
+
+	// Do login request
+	resp, err = client.PostForm(domain+"/j_security_check", url.Values{
+		"j_username": {username},
+		"j_password": {token},
+	})
+	if err != nil {
+		panic(err)
+	}
+	// Print response
+	fmt.Println("second login response:", resp, getBody(resp))
+
+
+}
+
+// Takes the useful information out of a ticket (code based on Planon APK function 'decodeResultAndLoginTwoWayAuth'
+func decodeTicket(ticket string) (domain, username, password string) {
+	decoded := decodeBase64(ticket)
+	values := strings.Split(decoded, "@ @")
+	domain = values[0]
+	username = decodeBase64(values[1])
+	password = values[2]
+	return
+}
+
+func decodeBase64(s string) string {
+	data, err := base64.StdEncoding.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return string(data)
+}
+
+func getBody(resp *http.Response) string {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		panic(err)
 	}
 	resp.Body.Close()
-
-	fmt.Println("Response:", resp)
-	fmt.Println("Response body:", string(body))
+	return string(body)
 }

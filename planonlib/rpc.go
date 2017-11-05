@@ -13,15 +13,15 @@ import (
 )
 
 type planonError struct {
-	ID int
-	ExMessage string `json:"exMessage"`
+	ID            int
+	ExMessage     string `json:"exMessage"`
 	DetailMessage string `json:"detailMessage"`
-	Cause struct{
-		Class string `json:"class"`
+	Cause struct {
+		Class   string `json:"class"`
 		Message string `json:"message"`
-		ID int
+		ID      int
 	} `json:"cause"`
-	StackTrace []interface{} `json:"stackTrace"`
+	StackTrace           []interface{} `json:"stackTrace"`
 	SuppressedExceptions []interface{} `json:"suppressedExceptions"`
 }
 
@@ -60,11 +60,11 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 
 		// Check if response type is now JSON, i.e. authentication succeeded (hopefully)
 		if contentType(resp) != "application/json" {
-			return errors.New("Planon authentication failed")
+			return errors.New(fmt.Sprint("no JSON response: ", resp))
 		}
 	default:
 		// Unknown content type, throw error
-		return errors.New("got unknown response")
+		return errors.New(fmt.Sprint("no JSON response: ", resp))
 	}
 
 	// Decode JSON-RPC response
@@ -80,7 +80,7 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 		errorMap := error.(map[string]interface{})
 		errorId := errorMap["ID"].(float64)
 		errorMessage := errorMap["exMessage"].(string)
-		return errors.New(fmt.Sprintf("rpc error: %v %v", errorId, errorMessage))
+		return errors.New(fmt.Sprintf("%v %v", errorId, errorMessage))
 	}
 	if p.id != id {
 		return errors.New("rpc response id is not equal to request id")

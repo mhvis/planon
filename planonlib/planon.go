@@ -7,7 +7,11 @@ import (
 	"net/http/cookiejar"
 	"time"
 	"errors"
+	"fmt"
 )
+
+// Planon accepts following time format, which is almost the same as ISO8601/RFC3339, however slight different ._.
+var planonTime = "2006-01-02T15:04:05-0700"
 
 type Planon struct {
 	client        *http.Client
@@ -47,8 +51,8 @@ func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reserva
 		"oRoom": map[string]interface{}{
 			"id": roomId,
 		},
-		"start": start.Format(time.RFC3339),
-		"end":   end.Format(time.RFC3339),
+		"start": start.Format(planonTime),
+		"end":   end.Format(planonTime),
 	}
 	var response interface{}
 	err := p.Call("/RoomInformation", "getReservation", params, &response)
@@ -58,13 +62,13 @@ func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reserva
 
 	// Extra data from response
 	obj := response.(map[string]interface{})
-	list := obj["list"].([]map[string]interface{})
+	list := obj["list"].([]interface{})
 
 	// Extract reservations
 	reservations := make([]Reservation, 0, len(list))
 	for _, v := range list {
 		// Skip reservations with empty id
-		if v["id"] == nil {
+		if v.(map[string]interface{})["id"] == nil {
 			continue
 		}
 		// Append reservation to the list
@@ -75,23 +79,23 @@ func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reserva
 }
 
 // ReserveRoom
-func (p *Planon) ReserveRoom(roomId string, start, end time.Time) error {
+func (p *Planon) ReserveRoom(roomId, name string, start, end time.Time) error {
 	// Request
 	params := map[string]interface{}{
 		"oRoom": map[string]interface{}{
 			"id": roomId,
 		},
-		"start": start.Format(time.RFC3339),
-		"end":   end.Format(time.RFC3339),
+		"start": start.Format(planonTime),
+		"end":   end.Format(planonTime),
 	}
-	var response string
+	var response bool
 	err := p.Call("/RoomInformation", "reserveRoom", params, &response)
 	if err != nil {
 		return err
 	}
 	// Check response
-	if response != "true" {
-		return errors.New("unexpected return value: " + response)
+	if response != true {
+		return errors.New(fmt.Sprintf("unexpected response: %v", response))
 	}
 	return nil
 }
@@ -103,7 +107,7 @@ func (p *Planon) ExtendReservation(reservationId string, end time.Time) error {
 		"reservation": map[string]interface{}{
 			"id": reservationId,
 		},
-		"end":   end.Format(time.RFC3339),
+		"end":   end.Format(planonTime),
 	}
 	var response string
 	err := p.Call("/RoomInformation", "extendReservation", params, &response)
