@@ -5,18 +5,18 @@ package planonlib
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/mhvis/planon/jsonrpc"
 	"net/http"
 	"net/url"
 	"strings"
-	"fmt"
 )
 
 type planonError struct {
 	ID            int
 	ExMessage     string `json:"exMessage"`
 	DetailMessage string `json:"detailMessage"`
-	Cause struct {
+	Cause         struct {
 		Class   string `json:"class"`
 		Message string `json:"message"`
 		ID      int

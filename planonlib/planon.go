@@ -2,12 +2,12 @@
 package planonlib
 
 import (
+	"errors"
+	"fmt"
 	"golang.org/x/net/publicsuffix"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
-	"errors"
-	"fmt"
 )
 
 // Planon accepts following time format, which is almost the same as ISO8601/RFC3339, however slight different ._.
@@ -42,7 +42,6 @@ func NewPlanonSession(twoWayAuthUrl, jUsername, jPassword string) *Planon {
 }
 
 // JSON request/response samples: https://github.com/mhvis/planon/blob/master/planonlib/samples.md
-
 
 // GetReservations
 func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reservation, error) {
@@ -107,7 +106,7 @@ func (p *Planon) ExtendReservation(reservationId string, end time.Time) error {
 		"reservation": map[string]interface{}{
 			"id": reservationId,
 		},
-		"end":   end.Format(planonTime),
+		"end": end.Format(planonTime),
 	}
 	var response string
 	err := p.Call("/RoomInformation", "extendReservation", params, &response)
@@ -150,7 +149,6 @@ func (p *Planon) GetMe() (Person, error) {
 	}
 	return extractPerson(response), nil
 }
-
 
 func (p *Planon) GetRoomWithCode(searchcode string) error {
 	params := map[string]interface{}{"searchcode": searchcode}

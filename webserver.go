@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"time"
 	"github.com/mhvis/planon/planonlib"
 	"net/http"
+	"time"
 )
 
 func listenAndServe(apiKeys []string, p *planonlib.Planon) {

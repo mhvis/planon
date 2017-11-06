@@ -1,17 +1,17 @@
 package main
 
 import (
-	"os"
-	"fmt"
-	"net/http"
-	"time"
-	"net/http/cookiejar"
-	"golang.org/x/net/publicsuffix"
-	"net/url"
-	"io/ioutil"
-	"github.com/mhvis/planon/jsonrpc"
 	"encoding/base64"
+	"fmt"
+	"github.com/mhvis/planon/jsonrpc"
+	"golang.org/x/net/publicsuffix"
+	"io/ioutil"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"os"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -97,7 +97,6 @@ func main() {
 	}
 	// Print response
 	fmt.Println("second login response:", resp, getBody(resp))
-
 
 }
 
