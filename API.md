@@ -2,60 +2,31 @@
 
 (I recommend Insomnia for testing REST calls :) )
 
+### Requests
+For simplicity, all requests must be POST requests with Content-Type `application/x-www-form-urlencoded` for the parameters.
+
 ### Authentication
 Requests are validated using a `X-API-Key` header with a valid key.
 
-### HTTP response status codes
-* `2XX`: when the request succeeded.
+### Responses
+* `200 OK`: the action succeeded, `application/json` data is returned.
+* `204 No content`: the action succeeded, no data is returned.
 * `400 Bad request`: when a request parameter is incorrect (e.g. incorrect timestamp format).
 * `401 Unauthorized`: when the API key is incorrect.
 * `418 I'm a teapot`: when Planon returned an error. The body includes the error message.
 * `500 Internal server error`: when something else went wrong. May or may not include a helpful message.
 
-## /reservations
-
-### GET
-
-#### Request
+## /getReservations
 
 * room_id
 * start: RFC3339 timestamp
 * end: RFC3339 timestamp
 
-Example: `/reservations?room_id=3100%0a-2%0a-2.380&start=2017-11-01T00:00:00%2b01:00&end=2017-11-30T00:00:00%2b01:00`
+Response: `200 OK`.
 
-#### Response example
-
-`HTTP 200 OK`
-
+Response example:
 ```json
 [
-    {
-        "id": "2027944.00",
-        "room": {
-            "id": "3100\n-2\n-2.386",
-            "status": "FREE",
-            "reserved": false,
-            "people": 0
-        },
-        "person": {
-            "id": "0000207847",
-            "last_name": "Rodriguez Gómez",
-            "first_name": "Luis",
-            "name_prefix": "",
-            "email": "l.rodriguez.gomez@student.tue.nl",
-            "avail": "UNDEFINED",
-            "department": {
-                "id": "36",
-                "name": "Faculteit Electrical Engineering"
-            }
-        },
-        "mine": false,
-        "start": "2017-11-05T16:45:00+01:00",
-        "end": "2017-11-05T19:00:00+01:00",
-        "type": "OtherReservation",
-        "name": "Room reservation"
-    },
     {
         "id": "1997966.00",
         "room": {
@@ -85,29 +56,44 @@ Example: `/reservations?room_id=3100%0a-2%0a-2.380&start=2017-11-01T00:00:00%2b0
 ]
 ```
 
-### POST
-
-#### Request
+## /reserveRoom
 
 * room_id
 * start: RFC3339
 * end: RFC3339
 * name (not actually used at the moment)
 
-#### Response
+Response: `204 No content`.
 
-
-HTTP 201 Created
-
-
-
-
-### DELETE
-
-#### Request
+## /endReservation
 
 * reservation_id
 
-#### Response
+Response: `204 No content`.
 
-`HTTP 204 No Content` when successfully deleted
+## /extendReservation
+
+* reservation_id
+* end: RFC3339
+
+Response: `204 No content`.
+
+## /getPropertyList
+
+Response: `200 OK`.
+
+## /getFloorsOfProperty
+
+* property_id
+
+Response: `200 OK`.
+
+## /getFreeRooms
+
+* property_id
+
+Response: `200 OK`.
+
+## /getMe
+
+Response: `200 OK`.
