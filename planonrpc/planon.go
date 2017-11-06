@@ -1,5 +1,5 @@
 // Package planon provides high-level and lower-level functions for Planon BookMySpace.
-package planonlib
+package planonrpc
 
 import (
 	"errors"
@@ -13,15 +13,16 @@ import (
 // Planon accepts following time format, which is almost the same as ISO8601/RFC3339, however slight different ._.
 var planonTime = "2006-01-02T15:04:05-0700"
 
-type Planon struct {
+// Service stores data for a web service connection.
+type Service struct {
 	client        *http.Client
 	id            int
-	twoWayAuthUrl string
+	twowayauthUrl string
 	jUsername     string
 	jPassword     string
 }
 
-func NewPlanonSession(twoWayAuthUrl, jUsername, jPassword string) *Planon {
+func NewService(twowayauthUrl, jUsername, jPassword string) *Service {
 	// Create cookie jar
 	jar, err := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	if err != nil {
@@ -32,10 +33,10 @@ func NewPlanonSession(twoWayAuthUrl, jUsername, jPassword string) *Planon {
 		Timeout: 10 * time.Second,
 		Jar:     jar,
 	}
-	return &Planon{
+	return &Service{
 		client,
 		0,
-		twoWayAuthUrl,
+		twowayauthUrl,
 		jUsername,
 		jPassword,
 	}
@@ -44,7 +45,7 @@ func NewPlanonSession(twoWayAuthUrl, jUsername, jPassword string) *Planon {
 // JSON request/response samples: https://github.com/mhvis/planon/blob/master/planonlib/samples.md
 
 // GetReservations
-func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reservation, error) {
+func (p *Service) GetReservations(roomId string, start, end time.Time) ([]Reservation, error) {
 	// Request
 	params := map[string]interface{}{
 		"oRoom": map[string]interface{}{
@@ -78,7 +79,7 @@ func (p *Planon) GetReservations(roomId string, start, end time.Time) ([]Reserva
 }
 
 // ReserveRoom
-func (p *Planon) ReserveRoom(roomId, name string, start, end time.Time) error {
+func (p *Service) ReserveRoom(roomId, name string, start, end time.Time) error {
 	// Request
 	params := map[string]interface{}{
 		"oRoom": map[string]interface{}{
@@ -100,7 +101,7 @@ func (p *Planon) ReserveRoom(roomId, name string, start, end time.Time) error {
 }
 
 // ExtendReservation
-func (p *Planon) ExtendReservation(reservationId string, end time.Time) error {
+func (p *Service) ExtendReservation(reservationId string, end time.Time) error {
 	// Request
 	params := map[string]interface{}{
 		"reservation": map[string]interface{}{
@@ -121,11 +122,43 @@ func (p *Planon) ExtendReservation(reservationId string, end time.Time) error {
 }
 
 // EndReservation
-func (p *Planon) EndReservation(reservationId string) error {
+func (p *Service) EndReservation(reservationId string) error {
 	// Request
 	params := map[string]interface{}{
+		"oRoom": map[string]interface{}{
+			"id": "3100\n-2\n-2.380",
+			"people": 1,
+			"name": nil,
+			"res": "3100.-2.380",
+			"fac": []string{},
+			"oms": 0,
+			"isRes": true,
+			"status": "FREE",
+		},
 		"reservation": map[string]interface{}{
+			"locCode": map[string]interface{}{
+				"id": "3100\n-2\n-2.380",
+			},
+			"pers": map[string]interface{}{
+				"id": "0000109425",
+				"dep": map[string]interface{}{
+					"id": "32",
+				},
+				"tel": map[string]interface{}{},
+			},
+			"end": "2017-11-06T07:00:00+01:00",
+			"start": "2017-11-06T06:00:00+01:00",
 			"id": reservationId,
+			"myRes": true,
+			"cEnd": false,
+			"fEnd": true,
+			"fExt": true,
+			"canShow": false,
+			"showStat": "SHOWN_UP",
+			"maxExtTime": nil,
+			"resType": "MyReservation",
+			"name": "Room reservation",
+
 		},
 	}
 	var response interface{}
@@ -141,7 +174,7 @@ func (p *Planon) EndReservation(reservationId string) error {
 }
 
 // GetMe
-func (p *Planon) GetMe() (Person, error) {
+func (p *Service) GetMe() (Person, error) {
 	var response interface{}
 	err := p.Call("/UserInformation", "getMe", nil, &response)
 	if err != nil {
@@ -150,7 +183,7 @@ func (p *Planon) GetMe() (Person, error) {
 	return extractPerson(response), nil
 }
 
-func (p *Planon) GetRoomWithCode(searchcode string) error {
+func (p *Service) GetRoomWithCode(searchcode string) error {
 	params := map[string]interface{}{"searchcode": searchcode}
 	err := p.Call("/RoomInformation", "getRoomWithCode", params, nil)
 	return err
@@ -158,7 +191,7 @@ func (p *Planon) GetRoomWithCode(searchcode string) error {
 }
 
 // GetFreeRooms
-func (p *Planon) GetFreeRooms(propertyId string) ([]Room, error) {
+func (p *Service) GetFreeRooms(propertyId string) ([]Room, error) {
 	params := map[string]interface{}{
 		"theProperty": map[string]interface{}{
 			"id": propertyId,
@@ -179,7 +212,7 @@ func (p *Planon) GetFreeRooms(propertyId string) ([]Room, error) {
 }
 
 // GetPropertyList
-func (p *Planon) GetPropertyList() ([]Property, error) {
+func (p *Service) GetPropertyList() ([]Property, error) {
 	var response map[string]interface{}
 	err := p.Call("/FloorInformation", "getPropertyList", nil, &response)
 	if err != nil {
@@ -195,7 +228,7 @@ func (p *Planon) GetPropertyList() ([]Property, error) {
 }
 
 // GetFloorsOfProperty
-func (p *Planon) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
+func (p *Service) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
 	params := map[string]interface{}{
 		"theProperty": map[string]interface{}{
 			"id": propertyId,
@@ -217,7 +250,7 @@ func (p *Planon) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
 }
 
 // GetVersionDetails
-func (p *Planon) GetVersionDetails() (VersionDetails, error) {
+func (p *Service) GetVersionDetails() (VersionDetails, error) {
 	var versionDetails VersionDetails
 	err := p.Call("/VersionCheck", "getVersionDetails", nil, &versionDetails)
 	return versionDetails, err

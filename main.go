@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/mhvis/planon/planonlib"
+	"github.com/mhvis/planon/planonrpc"
 	"github.com/spf13/viper"
 )
 
@@ -20,14 +20,7 @@ func main() {
 	jPassword := viper.GetString("j_password")
 	apiKeys := viper.GetStringSlice("api_keys")
 
-	p := planonlib.NewPlanonSession(twowayauthUrl, jUsername, jPassword)
-
-	//reservations, err := p.GetReservations("3100\n-2\n-2.380", time.Now(), time.Now().Add(48*time.Hour))
-	//if err != nil {
-	//	log.Println(err)
-	//} else {
-	//	log.Println(reservations)
-	//}
+	p := planonrpc.NewService(twowayauthUrl, jUsername, jPassword)
 
 	listenAndServe(apiKeys, p)
 }

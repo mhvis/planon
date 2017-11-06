@@ -1,4 +1,4 @@
-package planonlib
+package planonrpc
 
 // Planon low-level RPC.
 
@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"io/ioutil"
 )
 
 type planonError struct {
@@ -26,10 +27,10 @@ type planonError struct {
 }
 
 // Call calls the given method with parameters on Planon.
-func (p *Planon) Call(endpoint, method string, params map[string]interface{}, result interface{}) error {
+func (p *Service) Call(endpoint, method string, params map[string]interface{}, result interface{}) error {
 	// Construct request
 	paramsEncoded := jsonEncodeParams(params)
-	req, err := jsonrpc.EncodeRequest(p.twoWayAuthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
+	req, err := jsonrpc.EncodeRequest(p.twowayauthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
 	if err != nil {
 		return err
 	}
@@ -52,7 +53,7 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 	case "text/html":
 		// HTML response, assuming login screen, try to authenticate
 		login := url.Values{"j_username": {p.jUsername}, "j_password": {p.jPassword}}
-		resp, err = p.client.PostForm(p.twoWayAuthUrl+"/j_security_check", login)
+		resp, err = p.client.PostForm(p.twowayauthUrl+"/j_security_check", login)
 		if err != nil {
 			return err
 		}
@@ -60,11 +61,11 @@ func (p *Planon) Call(endpoint, method string, params map[string]interface{}, re
 
 		// Check if response type is now JSON, i.e. authentication succeeded (hopefully)
 		if contentType(resp) != "application/json" {
-			return errors.New(fmt.Sprint("no JSON response: ", resp))
+			return unexpectedResponseError(resp)
 		}
 	default:
 		// Unknown content type, throw error
-		return errors.New(fmt.Sprint("no JSON response: ", resp))
+		return unexpectedResponseError(resp)
 	}
 
 	// Decode JSON-RPC response
@@ -108,4 +109,18 @@ func jsonEncodeParams(params map[string]interface{}) map[string]string {
 		paramsEncoded[k] = string(encoded)
 	}
 	return paramsEncoded
+}
+
+
+func unexpectedResponseError(resp *http.Response) error {
+	errorString := fmt.Sprintf("unexpected response: %v", resp)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		errorString += ", could not read body: " + err.Error()
+	} else {
+		errorString += ", body: " + string(body)
+	}
+	return errors.New(errorString)
+
 }

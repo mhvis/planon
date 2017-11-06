@@ -1,4 +1,4 @@
-package planonlib
+package planonrpc
 
 import (
 	"reflect"
