@@ -2,7 +2,8 @@
 Description=Planon
 
 [Service]
-ExecStart=/path/to/planon
+WorkingDirectory=/path/to/planon/directory
+ExecStart=/path/to/planon/binary
 
 [Install]
 WantedBy=multi-user.target
