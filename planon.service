@@ -1,0 +1,8 @@
+[Unit]
+Description=Planon
+
+[Service]
+ExecStart=/path/to/planon
+
+[Install]
+WantedBy=multi-user.target
