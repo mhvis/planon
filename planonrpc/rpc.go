@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mhvis/planon/jsonrpc"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
-	"io/ioutil"
 )
 
 type planonError struct {
@@ -69,7 +69,7 @@ func (p *Service) Call(endpoint, method string, params map[string]interface{}, r
 	}
 
 	// Decode JSON-RPC response
-	var resultEncoded string
+	var resultEncoded interface{}
 	var error interface{}
 	id, err := jsonrpc.DecodeResponse(resp, &resultEncoded, &error)
 	if err != nil {
@@ -87,7 +87,10 @@ func (p *Service) Call(endpoint, method string, params map[string]interface{}, r
 		return errors.New("rpc response id is not equal to request id")
 	}
 	// Decode result
-	return json.Unmarshal([]byte(resultEncoded), result)
+	if resultEncoded == nil {
+		return nil
+	}
+	return json.Unmarshal([]byte(resultEncoded.(string)), result)
 }
 
 // contentType returns the content type.
@@ -110,7 +113,6 @@ func jsonEncodeParams(params map[string]interface{}) map[string]string {
 	}
 	return paramsEncoded
 }
-
 
 func unexpectedResponseError(resp *http.Response) error {
 	errorString := fmt.Sprintf("unexpected response: %v", resp)

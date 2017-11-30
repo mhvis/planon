@@ -60,7 +60,16 @@ func reserveRoom(p *planonrpc.Service) gin.HandlerFunc {
 
 func endReservation(p *planonrpc.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		err := p.EndReservation(c.PostForm("reservation_id"))
+		start, ok := parseTime(c, c.PostForm("start"))
+		if !ok {
+			return
+		}
+		end, ok := parseTime(c, c.PostForm("end"))
+		if !ok {
+			return
+		}
+
+		err := p.EndReservation(c.PostForm("room_id"), start, end)
 		setResponse(c, nil, err)
 	}
 }

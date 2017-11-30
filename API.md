@@ -67,7 +67,9 @@ Response: `204 No content`.
 
 ## /endReservation
 
-* reservation_id
+* room_id
+* start: RFC3339
+* end: RFC3339
 
 Response: `204 No content`.
 

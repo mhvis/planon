@@ -121,55 +121,75 @@ func (p *Service) ExtendReservation(reservationId string, end time.Time) error {
 	return nil
 }
 
-// EndReservation
-func (p *Service) EndReservation(reservationId string) error {
+// EndReservation, a bit hacky
+func (p *Service) EndReservation(roomId string, start, end time.Time) error {
+	// TODO: clean up this function
+
+	// TODO: below is duplication of GetReservations!
 	// Request
 	params := map[string]interface{}{
 		"oRoom": map[string]interface{}{
-			"id": "3100\n-2\n-2.380",
-			"people": 1,
-			"name": nil,
-			"res": "3100.-2.380",
-			"fac": []string{},
-			"oms": 0,
-			"isRes": true,
-			"status": "FREE",
+			"id": roomId,
 		},
-		"reservation": map[string]interface{}{
-			"locCode": map[string]interface{}{
-				"id": "3100\n-2\n-2.380",
-			},
-			"pers": map[string]interface{}{
-				"id": "0000109425",
-				"dep": map[string]interface{}{
-					"id": "32",
-				},
-				"tel": map[string]interface{}{},
-			},
-			"end": "2017-11-06T07:00:00+01:00",
-			"start": "2017-11-06T06:00:00+01:00",
-			"id": reservationId,
-			"myRes": true,
-			"cEnd": false,
-			"fEnd": true,
-			"fExt": true,
-			"canShow": false,
-			"showStat": "SHOWN_UP",
-			"maxExtTime": nil,
-			"resType": "MyReservation",
-			"name": "Room reservation",
-
-		},
+		"start": start.Format(planonTime),
+		"end":   end.Format(planonTime),
 	}
 	var response interface{}
-	err := p.Call("/RoomInformation", "endReservation", params, &response)
+	err := p.Call("/RoomInformation", "getReservation", params, &response)
 	if err != nil {
 		return err
 	}
-	// Check response
-	if response != nil {
-		return errors.New("unexpected RPC return value")
+
+	// Extra data from response
+	obj := response.(map[string]interface{})
+	list := obj["list"].([]interface{})
+
+	// Extract reservations
+	reservations := make([]Reservation, 0, len(list))
+	for _, v := range list {
+		// Skip reservations with empty id
+		if v.(map[string]interface{})["id"] == nil {
+			continue
+		}
+		// Append reservation to the list
+		reservation := extractReservation(v)
+		reservations = append(reservations, reservation)
 	}
+	// END OF DUPLICATION
+
+	// Check if reservation is equal
+	if len(reservations) == 0 {
+		return errors.New("Planon reservation not found")
+	}
+	reservation := reservations[0]
+	if reservation.Start != start || reservation.End != end {
+		return errors.New("Planon reservation not found (incorrect start or end time)")
+	}
+
+
+	// FETCH ROOM
+	params = map[string]interface{}{
+		"searchcode": roomId,
+	}
+	var room interface{}
+	err = p.Call("/RoomInformation", "getRoomWithCode", params, &room)
+	if err != nil {
+		return err
+	}
+
+	// End reservation using the fetched reservation data
+	params = map[string]interface{}{
+		"reservation": list[0],
+		"oRoom": room,
+	}
+	err = p.Call("/RoomInformation", "endReservation", params, &response)
+	if err != nil {
+		return err
+	}
+	// Discard response
+	//if response != nil {
+	//	return errors.New("unexpected Planon response")
+	//}
 	return nil
 }
 
