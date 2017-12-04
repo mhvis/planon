@@ -162,7 +162,7 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 		return errors.New("Planon reservation not found")
 	}
 	reservation := reservations[0]
-	if reservation.Start != start || reservation.End != end {
+	if !reservation.Start.Equal(start) || !reservation.End.Equal(end) {
 		return errors.New("Planon reservation not found (incorrect start or end time)")
 	}
 
