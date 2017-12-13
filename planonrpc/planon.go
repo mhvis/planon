@@ -157,15 +157,17 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 	}
 	// END OF DUPLICATION
 
-	// Check if reservation is equal
-	if len(reservations) == 0 {
+	// Search for reservation with equal start and end
+	resIdx := -1
+	for i, res := range reservations {
+		if res.Start.Equal(start) && res.End.Equal(end) {
+			resIdx = i
+			break
+		}
+	}
+	if resIdx == -1 {
 		return errors.New("Planon reservation not found")
 	}
-	reservation := reservations[0]
-	if !reservation.Start.Equal(start) || !reservation.End.Equal(end) {
-		return errors.New("Planon reservation not found (incorrect start or end time)")
-	}
-
 
 	// FETCH ROOM
 	params = map[string]interface{}{
@@ -179,7 +181,7 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 
 	// End reservation using the fetched reservation data
 	params = map[string]interface{}{
-		"reservation": list[0],
+		"reservation": list[resIdx],
 		"oRoom": room,
 	}
 	err = p.Call("/RoomInformation", "endReservation", params, &response)
