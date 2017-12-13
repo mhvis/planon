@@ -5,7 +5,7 @@ API for the Planon BookMySpace system.
 ## Usage
 
 * Copy `config.toml.sample` to `config.toml` and adjust the values.
-* `go build && ./planon`
+* `go build && ./planon` (or use the prebuilt Linux x64 binary at the releases page)
 
 ## License
 
