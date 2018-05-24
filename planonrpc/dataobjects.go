@@ -61,20 +61,28 @@ type Floor struct {
 // Extraction functions which extract data from a given JSON decoded object.
 
 func extractDepartment(obj interface{}) Department {
-	o := obj.(map[string]interface{})
-	return Department{
-		Id:   asString(o["id"]),
-		Name: asString(o["name"]),
+	o, ok := obj.(map[string]interface{})
+	if !ok {
+		return Department{}
+	} else {
+		return Department{
+			Id:   asString(o["id"]),
+			Name: asString(o["name"]),
+		}
 	}
 }
 
 func extractRoom(obj interface{}) Room {
-	o := obj.(map[string]interface{})
-	return Room{
-		Id:       asString(o["id"]),
-		People:   int(o["people"].(float64)),
-		Reserved: o["isRes"].(bool),
-		Status:   asString(o["status"]),
+	o, ok := obj.(map[string]interface{})
+	if !ok {
+		return Room{}
+	} else {
+		return Room{
+			Id:       asString(o["id"]),
+			People:   int(o["people"].(float64)),
+			Reserved: o["isRes"].(bool),
+			Status:   asString(o["status"]),
+		}
 	}
 }
 
