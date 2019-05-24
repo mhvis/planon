@@ -1,7 +1,5 @@
 # API documentation
 
-(I recommend Insomnia for testing REST calls :) )
-
 ### Requests
 For simplicity, all requests must be POST requests with Content-Type `application/x-www-form-urlencoded` for the parameters.
 
@@ -37,10 +35,10 @@ Response example:
         },
         "person": {
             "id": "0000108538",
-            "last_name": "Kock",
-            "first_name": "Bor",
-            "name_prefix": "de",
-            "email": "b.b.d.kock@student.tue.nl",
+            "last_name": "Raap",
+            "first_name": "Henk",
+            "name_prefix": "van",
+            "email": "some@email.nl",
             "avail": "PRIVATE",
             "department": {
                 "id": "32",
