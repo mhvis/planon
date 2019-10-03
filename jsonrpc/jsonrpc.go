@@ -14,6 +14,7 @@ type rpcRequest struct {
 	Id     int         `json:"id"`
 	Method string      `json:"method"`
 	Params interface{} `json:"params"`
+	Args   []string    `json:"args"`
 }
 
 // rpcResponse is the format for JSON RPC responses
@@ -46,14 +47,14 @@ func DecodeResponse(resp *http.Response, result, error interface{}) (id int, err
 }
 
 // Encode encodes given arguments to a JSON object.
-func Encode(method string, params interface{}, id int) ([]byte, error) {
-	req := rpcRequest{id, method, params}
+func Encode(method string, params interface{}, id int, args []string) ([]byte, error) {
+	req := rpcRequest{id, method, params, args}
 	return json.Marshal(req)
 }
 
 // EncodeRequest creates an HTTP request using given parameters.
-func EncodeRequest(url, method string, params interface{}, id int) (*http.Request, error) {
-	data, err := Encode(method, params, id)
+func EncodeRequest(url, method string, params interface{}, id int, args []string) (*http.Request, error) {
+	data, err := Encode(method, params, id, args)
 	if err != nil {
 		return nil, err
 	}

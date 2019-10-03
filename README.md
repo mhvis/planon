@@ -12,6 +12,12 @@ API for the Planon BookMySpace system.
 
 * TU/e: https://agnes2.campus.tue.nl:18443/twowayauth
 
+## Reverse engineering notes
+
+Implementation is based on reverse engineering of the Planon Android app using
+a HTTP proxy. By using Charles Proxy I had problems somehow with the SSL
+certificate and couldn't get it to work, but using mitmproxy worked fine.
+
 ## License
 
 Unlicensed for now, send me a mail if you want to use it.

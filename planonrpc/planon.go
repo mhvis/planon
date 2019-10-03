@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"golang.org/x/net/publicsuffix"
+	"encoding/json"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
 )
 
-// Planon accepts following time format, which is almost the same as ISO8601/RFC3339, however slight different ._.
-var planonTime = "2006-01-02T15:04:05-0700"
+// ~~Planon accepts following time format, which is almost the same as ISO8601/RFC3339, however slight different ._.~~
+// NEW PLANON VERSION USES RFC3339!!!
+var planonTime = time.RFC3339
 
 // Service stores data for a web service connection.
 type Service struct {
@@ -47,15 +49,13 @@ func NewService(twowayauthUrl, jUsername, jPassword string) *Service {
 // GetReservations
 func (p *Service) GetReservations(roomId string, start, end time.Time) ([]Reservation, error) {
 	// Request
-	params := map[string]interface{}{
-		"oRoom": map[string]interface{}{
-			"id": roomId,
-		},
-		"start": start.Format(planonTime),
-		"end":   end.Format(planonTime),
+	args := []string{
+		fmt.Sprintf("{\"id\":\"%s\"}", roomId),
+		fmt.Sprintf("\"%s\"", start.Format(planonTime)),
+		fmt.Sprintf("\"%s\"", end.Format(planonTime)),
 	}
 	var response interface{}
-	err := p.Call("/RoomInformation", "getReservation", params, &response)
+	err := p.Call("/RoomInformation", "getReservation", nil, args, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -81,15 +81,13 @@ func (p *Service) GetReservations(roomId string, start, end time.Time) ([]Reserv
 // ReserveRoom
 func (p *Service) ReserveRoom(roomId, name string, start, end time.Time) error {
 	// Request
-	params := map[string]interface{}{
-		"oRoom": map[string]interface{}{
-			"id": roomId,
-		},
-		"start": start.Format(planonTime),
-		"end":   end.Format(planonTime),
+	args := []string{
+		fmt.Sprintf("{\"id\":\"%s\"}", roomId),
+		fmt.Sprintf("\"%s\"", start.Format(planonTime)),
+		fmt.Sprintf("\"%s\"", end.Format(planonTime)),
 	}
 	var response bool
-	err := p.Call("/RoomInformation", "reserveRoom", params, &response)
+	err := p.Call("/RoomInformation", "reserveRoom", nil, args, &response)
 	if err != nil {
 		return err
 	}
@@ -102,6 +100,8 @@ func (p *Service) ReserveRoom(roomId, name string, start, end time.Time) error {
 
 // ExtendReservation
 func (p *Service) ExtendReservation(reservationId string, end time.Time) error {
+	return errors.New("this method is not updated to the new Planon API")
+
 	// Request
 	params := map[string]interface{}{
 		"reservation": map[string]interface{}{
@@ -110,7 +110,7 @@ func (p *Service) ExtendReservation(reservationId string, end time.Time) error {
 		"end": end.Format(planonTime),
 	}
 	var response string
-	err := p.Call("/RoomInformation", "extendReservation", params, &response)
+	err := p.Call("/RoomInformation", "extendReservation", params, []string{}, &response)
 	if err != nil {
 		return err
 	}
@@ -127,26 +127,24 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 
 	// TODO: below is duplication of GetReservations!
 	// Request
-	params := map[string]interface{}{
-		"oRoom": map[string]interface{}{
-			"id": roomId,
-		},
-		"start": start.Format(planonTime),
-		"end":   end.Format(planonTime),
+	args := []string{
+		fmt.Sprintf("{\"id\":\"%s\"}", roomId),
+		fmt.Sprintf("\"%s\"", start.Format(planonTime)),
+		fmt.Sprintf("\"%s\"", end.Format(planonTime)),
 	}
 	var response interface{}
-	err := p.Call("/RoomInformation", "getReservation", params, &response)
+	err := p.Call("/RoomInformation", "getReservation", nil, args, &response)
 	if err != nil {
 		return err
 	}
 
 	// Extra data from response
 	obj := response.(map[string]interface{})
-	list := obj["list"].([]interface{})
+	reservationList := obj["list"].([]interface{})
 
 	// Extract reservations
-	reservations := make([]Reservation, 0, len(list))
-	for _, v := range list {
+	reservations := make([]Reservation, 0, len(reservationList))
+	for _, v := range reservationList {
 		// Skip reservations with empty id
 		if v.(map[string]interface{})["id"] == nil {
 			continue
@@ -170,21 +168,29 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 	}
 
 	// FETCH ROOM
-	params = map[string]interface{}{
-		"searchcode": roomId,
+	args = []string{
+		fmt.Sprintf("\"%s\"", roomId),
 	}
 	var room interface{}
-	err = p.Call("/RoomInformation", "getRoomWithCode", params, &room)
+	err = p.Call("/RoomInformation", "getRoomWithCode", nil, args, &room)
 	if err != nil {
 		return err
 	}
 
 	// End reservation using the fetched reservation data
-	params = map[string]interface{}{
-		"reservation": list[resIdx],
-		"oRoom": room,
+	roomEncoded, err := json.Marshal(room)
+	if err != nil {
+		panic(err)
 	}
-	err = p.Call("/RoomInformation", "endReservation", params, &response)
+	reservationEncoded, err := json.Marshal(reservationList[resIdx])
+	if err != nil {
+		panic(err)
+	}
+	args = []string{
+		string(roomEncoded),
+		string(reservationEncoded),
+	}
+	err = p.Call("/RoomInformation", "endReservation", nil, args, &response)
 	if err != nil {
 		return err
 	}
@@ -198,7 +204,7 @@ func (p *Service) EndReservation(roomId string, start, end time.Time) error {
 // GetMe
 func (p *Service) GetMe() (Person, error) {
 	var response interface{}
-	err := p.Call("/UserInformation", "getMe", nil, &response)
+	err := p.Call("/UserInformation", "getMe", nil, []string{}, &response)
 	if err != nil {
 		return Person{}, err
 	}
@@ -206,21 +212,25 @@ func (p *Service) GetMe() (Person, error) {
 }
 
 func (p *Service) GetRoomWithCode(searchcode string) error {
+	return errors.New("this method is not updated to the new Planon API")
+
 	params := map[string]interface{}{"searchcode": searchcode}
-	err := p.Call("/RoomInformation", "getRoomWithCode", params, nil)
+	err := p.Call("/RoomInformation", "getRoomWithCode", params, []string{}, nil)
 	return err
 
 }
 
 // GetFreeRooms
 func (p *Service) GetFreeRooms(propertyId string) ([]Room, error) {
+	return nil, errors.New("this method is not updated to the new Planon API")
+
 	params := map[string]interface{}{
 		"theProperty": map[string]interface{}{
 			"id": propertyId,
 		},
 	}
 	var response map[string]interface{}
-	err := p.Call("/FloorInformation", "getFreeRooms", params, &response)
+	err := p.Call("/FloorInformation", "getFreeRooms", params, []string{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -236,7 +246,7 @@ func (p *Service) GetFreeRooms(propertyId string) ([]Room, error) {
 // GetPropertyList
 func (p *Service) GetPropertyList() ([]Property, error) {
 	var response map[string]interface{}
-	err := p.Call("/FloorInformation", "getPropertyList", nil, &response)
+	err := p.Call("/FloorInformation", "getPropertyList", nil, []string{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -251,6 +261,8 @@ func (p *Service) GetPropertyList() ([]Property, error) {
 
 // GetFloorsOfProperty
 func (p *Service) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
+	return nil, errors.New("this method is not updated to the new Planon API")
+
 	params := map[string]interface{}{
 		"theProperty": map[string]interface{}{
 			"id": propertyId,
@@ -258,7 +270,7 @@ func (p *Service) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
 	}
 
 	var response map[string]interface{}
-	err := p.Call("/FloorInformation", "getFloorsOfProperty", params, &response)
+	err := p.Call("/FloorInformation", "getFloorsOfProperty", params, []string{}, &response)
 	if err != nil {
 		return nil, err
 	}
@@ -274,6 +286,6 @@ func (p *Service) GetFloorsOfProperty(propertyId string) ([]Floor, error) {
 // GetVersionDetails
 func (p *Service) GetVersionDetails() (VersionDetails, error) {
 	var versionDetails VersionDetails
-	err := p.Call("/VersionCheck", "getVersionDetails", nil, &versionDetails)
+	err := p.Call("/VersionCheck", "getVersionDetails", nil, []string{}, &versionDetails)
 	return versionDetails, err
 }

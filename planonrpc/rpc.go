@@ -27,10 +27,10 @@ type planonError struct {
 }
 
 // Call calls the given method with parameters on Planon.
-func (p *Service) Call(endpoint, method string, params map[string]interface{}, result interface{}) error {
+func (p *Service) Call(endpoint, method string, params map[string]interface{}, args []string, result interface{}) error {
 	// Construct request
 	paramsEncoded := jsonEncodeParams(params)
-	req, err := jsonrpc.EncodeRequest(p.twowayauthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id)
+	req, err := jsonrpc.EncodeRequest(p.twowayauthUrl+"/JSONrpc"+endpoint, method, paramsEncoded, p.id, args)
 	if err != nil {
 		return err
 	}
