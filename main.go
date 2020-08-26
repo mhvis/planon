@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/mhvis/planon/planonrpc"
 	"github.com/spf13/viper"
+	"net/http"
+	"crypto/tls"
 )
 
 func main() {
@@ -19,6 +21,11 @@ func main() {
 	jUsername := viper.GetString("j_username")
 	jPassword := viper.GetString("j_password")
 	apiKeys := viper.GetStringSlice("api_keys")
+	serverName := viper.GetString("server_name")
+
+	if serverName != "" {
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{ServerName: serverName}
+	}
 
 	p := planonrpc.NewService(twowayauthUrl, jUsername, jPassword)
 

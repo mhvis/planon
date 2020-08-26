@@ -7,3 +7,5 @@ j_password = ""
 api_keys = [
     "",
 ]
+
+server_name = ""  # Optional, for TLS certificate check
