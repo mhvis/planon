@@ -8,4 +8,6 @@ api_keys = [
     "",
 ]
 
-server_name = ""  # Optional, for TLS certificate check
+# server_name = ""  # Optional, for TLS certificate check
+
+# insecure_skip_verify = true  # Optional, skips certificate check
