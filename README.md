@@ -8,10 +8,6 @@ API for the Planon BookMySpace system.
 * `go build && ./planon` or use the prebuilt Linux x64 binary at the releases page
 * See [API.md](https://github.com/mhvis/planon/blob/master/API.md) for the server endpoints
 
-## Planon instances
-
-* TU/e: https://agnes2.campus.tue.nl:18443/twowayauth
-
 ## Reverse engineering notes
 
 Implementation is based on reverse engineering of the Planon Android app using
