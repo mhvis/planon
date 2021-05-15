@@ -22,10 +22,11 @@ func main() {
 	jPassword := viper.GetString("j_password")
 	apiKeys := viper.GetStringSlice("api_keys")
 	serverName := viper.GetString("server_name")
+	insecureSkipVerify := viper.GetBool("insecure_skip_verify")
 
-	if serverName != "" {
-		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{ServerName: serverName}
-	}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{
+		ServerName: serverName,
+		InsecureSkipVerify: insecureSkipVerify}
 
 	p := planonrpc.NewService(twowayauthUrl, jUsername, jPassword)
 
